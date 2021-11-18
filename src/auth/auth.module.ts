@@ -11,13 +11,17 @@ import jwtConfig from 'src/config/jwt.config';
 import { UsersService } from 'src/users/users.service';
 import { UsersModule } from 'src/users/users.module';
 import { JwtStrategy } from './jwt.strategy';
+import { File, FileSchema } from 'src/files/schema/file.schema';
 
 @Module({
   providers: [AuthService, LocalStrategy, JwtStrategy, UsersService],
   controllers: [AuthController],
   imports: [
     ConfigModule.forFeature(jwtConfig),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: File.name, schema: FileSchema },
+    ]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(jwtConfig)],

@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -14,6 +15,11 @@ import {
   CreateUserResponse,
   FindUserResponse,
 } from 'src/responses/users.responses';
+import * as mongoose from 'mongoose';
+import { IdParamPipe } from 'src/pipes/id-param.pipe';
+import { JwtAuthGuard } from 'src/auth/jtw-auth.guard';
+import { UserInterface } from 'src/interfaces/user.interface';
+import { UserObj } from 'src/decorators/user-object.decorator';
 
 @Controller('api/users')
 export class UsersController {
@@ -35,12 +41,21 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id', new IdParamPipe()) id: mongoose.Schema.Types.ObjectId,
+    @Body() updateUserDto: UpdateUserDto,
+    @UserObj() user: UserInterface,
+  ) {
+    return this.usersService.update(id, updateUserDto, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  @UseGuards(JwtAuthGuard)
+  remove(
+    @Param('id', new IdParamPipe()) id: mongoose.Schema.Types.ObjectId,
+    @UserObj() user: UserInterface,
+  ) {
+    return this.usersService.remove(id, user);
   }
 }

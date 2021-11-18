@@ -2,10 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Schema } from 'mongoose';
 import { UserInterface } from 'src/interfaces/user.interface';
 import {
   CreateUserResponse,
@@ -14,10 +15,14 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
+import { File, FileDocument } from 'src/files/schema/file.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(File.name) private fileModel: Model<FileDocument>,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<CreateUserResponse> {
     const { password, retypedPassword, login } = createUserDto;
@@ -53,7 +58,11 @@ export class UsersService {
     return this.filter(user);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    id: Schema.Types.ObjectId,
+    updateUserDto: UpdateUserDto,
+    updatingUser: UserInterface,
+  ) {
     const {
       login,
       password,
@@ -61,11 +70,16 @@ export class UsersService {
       newPassword,
       retypedNewPassword,
     } = updateUserDto;
-    const user = this.userModel.findById(id);
+    const user = await this.userModel.findById(id);
+    if (user._id.toString() !== updatingUser._id.toString()) {
+      throw new UnauthorizedException('Nie możesz usunąć czyjegoś konta');
+    }
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');
     }
-    const checkLoginExist = login ? this.userModel.findOne({ login }) : false;
+    const checkLoginExist = login
+      ? await this.userModel.findOne({ login })
+      : false;
     if (checkLoginExist) {
       throw new BadRequestException(
         `Użytkownik o loginie ${login} już istnieje`,
@@ -74,11 +88,15 @@ export class UsersService {
     return `This action updates a #${id} user`;
   }
 
-  async remove(id: string) {
-    const user = this.userModel.findById(id);
+  async remove(id: Schema.Types.ObjectId, deletingUser: UserInterface) {
+    const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');
     }
+    if (user._id.toString() !== deletingUser._id.toString()) {
+      throw new UnauthorizedException('Nie możesz usunąć czyjegoś konta');
+    }
+    await this.fileModel.deleteMany({ authorId: id });
     return this.filter(await this.userModel.findByIdAndDelete(id));
   }
 
