@@ -4,15 +4,12 @@ import {
   Injectable,
   PipeTransform,
 } from '@nestjs/common';
-import * as mongoose from 'mongoose';
 import { isMongoId } from 'class-validator';
+import { ObjectId } from 'src/types/object-id';
 
 @Injectable()
 export class IdParamPipe implements PipeTransform {
-  transform(
-    value: any,
-    metadata: ArgumentMetadata,
-  ): mongoose.Schema.Types.ObjectId {
+  transform(value: any, metadata: ArgumentMetadata): ObjectId {
     if (!isMongoId(value)) {
       throw new BadRequestException('Niepoprawne ID');
     }

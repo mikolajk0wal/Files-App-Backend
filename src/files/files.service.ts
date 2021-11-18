@@ -23,6 +23,7 @@ import { File, FileDocument } from './schema/file.schema';
 import * as path from 'path';
 import * as mongoose from 'mongoose';
 import { UserInterface } from 'src/interfaces/user.interface';
+import { ObjectId } from 'src/types/object-id';
 
 @Injectable()
 export class FilesService {
@@ -53,7 +54,7 @@ export class FilesService {
     return files.map((file) => this.filter(file));
   }
 
-  async findFile(id: string, res: any): Promise<any> {
+  async findFile(id: ObjectId, res: any): Promise<any> {
     const file = await this.fileModel.findById(id);
     if (!file) {
       throw new NotFoundException('Cannot find music');
@@ -63,7 +64,7 @@ export class FilesService {
     });
   }
 
-  async findById(id: string): Promise<FindFileResponse> {
+  async findById(id: ObjectId): Promise<FindFileResponse> {
     const file = await this.fileModel.findById(id);
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
@@ -83,7 +84,7 @@ export class FilesService {
   }
 
   async update(
-    id: string,
+    id: ObjectId,
     updateFileDto: UpdateFileDto,
   ): Promise<UpdateFileResponse> {
     const file = await this.fileModel.findById(id);
@@ -95,7 +96,7 @@ export class FilesService {
     return this.filter(updatedFile);
   }
 
-  async remove(id: string, user: UserInterface): Promise<DeleteFileResponse> {
+  async remove(id: ObjectId, user: UserInterface): Promise<DeleteFileResponse> {
     const file = await this.fileModel.findById(id);
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');

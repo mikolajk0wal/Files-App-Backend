@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import * as mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Schema } from 'mongoose';
 import { UserInterface } from 'src/interfaces/user.interface';
@@ -16,6 +17,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { File, FileDocument } from 'src/files/schema/file.schema';
+import { ObjectId } from 'src/types/object-id';
 
 @Injectable()
 export class UsersService {
@@ -40,7 +42,7 @@ export class UsersService {
     return this.filter(await this.userModel.create({ login, passwordHash }));
   }
 
-  async findOne(id: string): Promise<FindUserResponse> {
+  async findOne(id: ObjectId): Promise<FindUserResponse> {
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');
@@ -59,7 +61,7 @@ export class UsersService {
   }
 
   async update(
-    id: Schema.Types.ObjectId,
+    id: ObjectId,
     updateUserDto: UpdateUserDto,
     updatingUser: UserInterface,
   ) {
@@ -88,7 +90,7 @@ export class UsersService {
     return `This action updates a #${id} user`;
   }
 
-  async remove(id: Schema.Types.ObjectId, deletingUser: UserInterface) {
+  async remove(id: ObjectId, deletingUser: UserInterface) {
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');

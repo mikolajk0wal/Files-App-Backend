@@ -9,6 +9,7 @@ logs
 *.log
 npm-debug.log*
 yarn-debug.log*
+.env
 yarn-error.log*
 lerna-debug.log*
 

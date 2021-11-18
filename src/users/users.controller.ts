@@ -16,10 +16,11 @@ import {
   FindUserResponse,
 } from 'src/responses/users.responses';
 import * as mongoose from 'mongoose';
-import { IdParamPipe } from 'src/pipes/id-param.pipe';
-import { JwtAuthGuard } from 'src/auth/jtw-auth.guard';
-import { UserInterface } from 'src/interfaces/user.interface';
+import { IdParamPipe } from '../pipes/id-param.pipe';
+import { JwtAuthGuard } from '../auth/jtw-auth.guard';
+import { UserInterface } from '../interfaces/user.interface';
 import { UserObj } from 'src/decorators/user-object.decorator';
+import { ObjectId } from 'src/types/object-id';
 
 @Controller('api/users')
 export class UsersController {
@@ -31,7 +32,9 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<FindUserResponse> {
+  findOne(
+    @Param('id', new IdParamPipe()) id: ObjectId,
+  ): Promise<FindUserResponse> {
     return this.usersService.findOne(id);
   }
 
@@ -43,7 +46,7 @@ export class UsersController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   update(
-    @Param('id', new IdParamPipe()) id: mongoose.Schema.Types.ObjectId,
+    @Param('id', new IdParamPipe()) id: ObjectId,
     @Body() updateUserDto: UpdateUserDto,
     @UserObj() user: UserInterface,
   ) {
@@ -53,7 +56,7 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   remove(
-    @Param('id', new IdParamPipe()) id: mongoose.Schema.Types.ObjectId,
+    @Param('id', new IdParamPipe()) id: ObjectId,
     @UserObj() user: UserInterface,
   ) {
     return this.usersService.remove(id, user);
