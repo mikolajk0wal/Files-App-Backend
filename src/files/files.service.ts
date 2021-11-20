@@ -46,13 +46,13 @@ export class FilesService {
     return this.filter(file);
   }
 
-  async findAll(): Promise<FindFilesResponse> {
-    const files = await this.fileModel.find({});
-    if (!files.length) {
-      throw new NotFoundException('Nie znaleziono plików');
-    }
-    return files.map((file) => this.filter(file));
-  }
+  // async findAll(): Promise<FindFilesResponse> {
+  //   const files = await this.fileModel.find({});
+  //   if (!files.length) {
+  //     throw new NotFoundException('Nie znaleziono plików');
+  //   }
+  //   return files.map((file) => this.filter(file));
+  // }
 
   async findFile(id: ObjectId, res: any): Promise<any> {
     const file = await this.fileModel.findById(id);
@@ -75,12 +75,26 @@ export class FilesService {
   async findByType(
     type: FileType,
     sort: SortType = SortType.asc,
+    page: number,
   ): Promise<FindFilesResponse> {
-    const files = await this.fileModel.find({ type }).sort({ createdAt: sort });
+    const PER_PAGE = 9;
+    const skip = (page - 1) * PER_PAGE;
+    const files = await this.fileModel
+      .find({ type })
+      .skip(skip)
+      .limit(PER_PAGE)
+      .sort({ createdAt: sort });
     if (!files.length) {
       throw new NotFoundException('Nie znaleziono plików');
     }
-    return files.map((file) => this.filter(file));
+    const count = await this.fileModel.countDocuments({}).exec();
+
+    return {
+      files: files.map((user) => this.filter(user)),
+      requiredPages: Math.ceil(count / PER_PAGE),
+      count,
+      page,
+    };
   }
 
   async update(

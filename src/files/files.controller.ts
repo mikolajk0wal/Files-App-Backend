@@ -35,6 +35,7 @@ import { UserInterface } from 'src/interfaces/user.interface';
 import { IdParamPipe } from 'src/pipes/id-param.pipe';
 import { FileTypeGuard } from 'src/guards/file-type.guard';
 import { ObjectId } from 'src/types/object-id';
+import { ParsePagePipe } from 'src/pipes/parse-page.pipe';
 
 @Controller('api/files')
 export class FilesController {
@@ -55,10 +56,10 @@ export class FilesController {
     return this.filesService.create(createFileDto, file, user);
   }
 
-  @Get()
-  findAll(): Promise<FindFilesResponse> {
-    return this.filesService.findAll();
-  }
+  // @Get()
+  // findAll(): Promise<FindFilesResponse> {
+  //   return this.filesService.findAll();
+  // }
 
   @Get('file/:id')
   findFile(
@@ -79,9 +80,10 @@ export class FilesController {
   @UseGuards(SortGuard, FileTypeGuard)
   findByType(
     @Param('type') type: FileType,
+    @Query('page', new ParsePagePipe(1)) page: number,
     @Query('sort') sort?: SortType,
   ): Promise<FindFilesResponse> {
-    return this.filesService.findByType(type, sort);
+    return this.filesService.findByType(type, sort, page);
   }
 
   @Patch(':id')
