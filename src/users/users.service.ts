@@ -18,6 +18,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { File, FileDocument } from 'src/files/schema/file.schema';
 import { ObjectId } from 'src/types/object-id';
+import { SortType } from 'src/enums/sort.type';
 
 @Injectable()
 export class UsersService {
@@ -40,6 +41,26 @@ export class UsersService {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
     return this.filter(await this.userModel.create({ login, passwordHash }));
+  }
+
+  async findMany(sort?: SortType, page?: number) {
+    const PER_PAGE = 9;
+    const skip = (page - 1) * PER_PAGE;
+    const users = await this.userModel
+      .find({})
+      .skip(skip)
+      .limit(PER_PAGE)
+      .sort({ updatedAt: sort ? sort : 'desc' });
+    if (users.length === 0) {
+      throw new NotFoundException(`Nie znaleziono użytkowników`);
+    }
+    const count = await this.userModel.countDocuments({}).exec();
+    return {
+      users: users.map((user) => this.filter(user)),
+      requiredPages: Math.ceil(count / PER_PAGE),
+      count,
+      page,
+    };
   }
 
   async findOne(id: ObjectId): Promise<FindUserResponse> {
