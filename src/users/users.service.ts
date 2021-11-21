@@ -19,6 +19,7 @@ import { User, UserDocument } from './schemas/user.schema';
 import { File, FileDocument } from 'src/files/schema/file.schema';
 import { ObjectId } from 'src/types/object-id';
 import { SortType } from 'src/enums/sort.type';
+import { UserType } from 'src/enums/user-type';
 
 @Injectable()
 export class UsersService {
@@ -112,12 +113,14 @@ export class UsersService {
   }
 
   async remove(id: ObjectId, deletingUser: UserInterface) {
-    console.log(deletingUser);
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');
     }
-    if (user._id.toString() !== deletingUser._id.toString()) {
+    if (
+      user._id.toString() !== deletingUser._id.toString() &&
+      deletingUser.type !== UserType.admin
+    ) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś konta');
     }
     await this.fileModel.deleteMany({ authorId: id });

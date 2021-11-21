@@ -24,6 +24,7 @@ import * as path from 'path';
 import * as mongoose from 'mongoose';
 import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
+import { UserType } from 'src/enums/user-type';
 
 @Injectable()
 export class FilesService {
@@ -140,7 +141,10 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
-    if (file.authorId.toString() !== user._id.toString()) {
+    if (
+      file.authorId.toString() !== user._id.toString() &&
+      user.type !== UserType.admin
+    ) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś pliku');
     }
     return this.filter(await this.fileModel.findByIdAndDelete(id));
