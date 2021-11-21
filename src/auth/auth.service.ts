@@ -5,8 +5,8 @@ import * as bcrypt from 'bcryptjs';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { LoginPayload } from 'src/interfaces/login-payload.interface';
 import { CheckMeResponse, LoginResponse } from 'src/responses/auth.responses';
+import { UserInterface } from 'src/interfaces/user.interface';
 
 @Injectable()
 export class AuthService {
@@ -18,28 +18,37 @@ export class AuthService {
   async validateUser(
     login: string,
     password: string,
-  ): Promise<LoginPayload | null> {
+  ): Promise<UserInterface | null> {
     const user = await this.userModel.findOne({ login });
     if (!user) {
       return null;
     }
     const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
     if (user && passwordsMatch) {
-      const { _id, login } = user;
+      const { _id, login, type, createdAt, updatedAt } = user as any;
       return {
         _id,
         login,
+        type,
+        createdAt,
+        updatedAt,
       };
     }
     return null;
   }
 
-  login(user: any): LoginResponse {
-    const payload = { login: user.login, _id: user._id };
+  login({
+    login,
+    _id,
+    type,
+    createdAt,
+    updatedAt,
+  }: UserInterface): LoginResponse {
+    const payload = { login, _id, type, createdAt, updatedAt };
     return {
       jwt: this.jwtService.sign(payload),
-      userId: user._id,
-      login: user.login,
+      login,
+      userId: _id,
     };
   }
 

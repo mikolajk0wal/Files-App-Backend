@@ -2,7 +2,7 @@ import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginPayload } from 'src/interfaces/login-payload.interface';
+import { UserInterface } from 'src/interfaces/user.interface';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -13,7 +13,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(login: string, password: string): Promise<LoginPayload> {
+  async validate(login: string, password: string): Promise<UserInterface> {
     const user = await this.authService.validateUser(login, password);
     if (!user) {
       throw new UnauthorizedException('Zły login lub hasło');

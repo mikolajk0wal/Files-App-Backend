@@ -112,6 +112,7 @@ export class UsersService {
   }
 
   async remove(id: ObjectId, deletingUser: UserInterface) {
+    console.log(deletingUser);
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');
@@ -124,12 +125,13 @@ export class UsersService {
   }
 
   private filter(user: any): UserInterface {
-    const { login, createdAt, updatedAt, _id } = user;
+    const { login, createdAt, updatedAt, _id, type } = user;
     return {
       _id,
       login,
       createdAt,
       updatedAt,
+      type,
     };
   }
 }

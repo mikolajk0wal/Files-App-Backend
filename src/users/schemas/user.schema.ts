@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { UserType } from 'src/enums/user-type';
 
 export type UserDocument = User & Document;
 
@@ -7,11 +8,14 @@ export type UserDocument = User & Document;
   timestamps: true,
 })
 export class User {
-  @Prop()
+  @Prop({ type: String, required: true })
   login: string;
 
-  @Prop()
+  @Prop({ type: String, required: true })
   passwordHash: string;
+
+  @Prop({ default: UserType.normal, enum: UserType, type: String })
+  type?: UserType;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

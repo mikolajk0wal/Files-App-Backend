@@ -1,4 +1,5 @@
-import { IsString, Length } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import { UserType } from 'src/enums/user-type';
 
 export class CreateUserDto {
   @IsString()
@@ -12,4 +13,8 @@ export class CreateUserDto {
   @IsString()
   @Length(4, 100)
   retypedPassword: string;
+
+  @IsOptional()
+  @IsEnum(UserType)
+  type?: UserType;
 }
