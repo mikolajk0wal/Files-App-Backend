@@ -83,14 +83,39 @@ export class FilesService {
       .find({ type })
       .skip(skip)
       .limit(PER_PAGE)
-      .sort({ createdAt: sort });
+      .sort({ updatedAt: sort ? sort : 'desc' });
     if (!files.length) {
       throw new NotFoundException('Nie znaleziono plików');
     }
     const count = await this.fileModel.countDocuments({}).exec();
 
     return {
-      files: files.map((user) => this.filter(user)),
+      files: files.map((file) => this.filter(file)),
+      requiredPages: Math.ceil(count / PER_PAGE),
+      count,
+      page,
+    };
+  }
+
+  async findByAuthor(
+    author: string,
+    sort: SortType = SortType.asc,
+    page: number,
+  ): Promise<FindFilesResponse> {
+    const PER_PAGE = 9;
+    const skip = (page - 1) * PER_PAGE;
+    const files = await this.fileModel
+      .find({ authorName: author })
+      .skip(skip)
+      .limit(PER_PAGE)
+      .sort({ updatedAt: sort ? sort : 'desc' });
+    if (!files.length) {
+      throw new NotFoundException('Nie znaleziono plików');
+    }
+    const count = await this.fileModel.countDocuments({}).exec();
+
+    return {
+      files: files.map((file) => this.filter(file)),
       requiredPages: Math.ceil(count / PER_PAGE),
       count,
       page,

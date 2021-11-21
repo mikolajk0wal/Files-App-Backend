@@ -86,6 +86,16 @@ export class FilesController {
     return this.filesService.findByType(type, sort, page);
   }
 
+  @Get('/author/:author')
+  @UseGuards(SortGuard, FileTypeGuard)
+  findByAuthor(
+    @Param('author') author: string,
+    @Query('page', new ParsePagePipe(1)) page: number,
+    @Query('sort') sort?: SortType,
+  ): Promise<FindFilesResponse> {
+    return this.filesService.findByAuthor(author, sort, page);
+  }
+
   @Patch(':id')
   update(
     @Param('id', new IdParamPipe()) id: ObjectId,
