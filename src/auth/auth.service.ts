@@ -49,6 +49,7 @@ export class AuthService {
       jwt: this.jwtService.sign(payload),
       login,
       userId: _id,
+      type
     };
   }
 
