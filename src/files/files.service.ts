@@ -8,6 +8,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { FileType } from 'src/enums/file.type';
 import { SortType } from 'src/enums/sort.type';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { FileInterface } from 'src/interfaces/File';
 import {
   CreateFileResponse,
@@ -20,7 +22,6 @@ import { storageDir } from 'src/utils/storage';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { File, FileDocument } from './schema/file.schema';
-import * as path from 'path';
 import * as mongoose from 'mongoose';
 import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
@@ -143,10 +144,12 @@ export class FilesService {
     }
     if (
       file.authorId.toString() !== user._id.toString() &&
-      user.type !== UserType.admin
+      user.type !== UserType.admin &&
+      user.type !== UserType.moderator
     ) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś pliku');
     }
+    await fs.unlink(`${path.join(storageDir(), file.type)}/${file.fileName}`);
     return this.filter(await this.fileModel.findByIdAndDelete(id));
   }
 

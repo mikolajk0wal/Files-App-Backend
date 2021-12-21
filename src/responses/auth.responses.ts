@@ -11,4 +11,5 @@ export type LoginResponse = {
 export type CheckMeResponse = {
   userId: mongoose.Schema.Types.ObjectId;
   login: string;
+  type: UserType
 };

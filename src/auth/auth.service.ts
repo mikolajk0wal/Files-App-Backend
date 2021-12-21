@@ -59,6 +59,7 @@ export class AuthService {
     return {
       userId: user?._id,
       login: user.login,
+      type: user.type
     };
   }
 }

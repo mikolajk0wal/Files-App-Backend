@@ -5,6 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import * as mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Schema } from 'mongoose';
@@ -20,6 +22,7 @@ import { File, FileDocument } from 'src/files/schema/file.schema';
 import { ObjectId } from 'src/types/object-id';
 import { SortType } from 'src/enums/sort.type';
 import { UserType } from 'src/enums/user-type';
+import { storageDir } from 'src/utils/storage';
 
 @Injectable()
 export class UsersService {
@@ -87,15 +90,12 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
     updatingUser: UserInterface,
   ) {
-    const {
-      login,
-      password,
-      retypedPassword,
-      newPassword,
-      retypedNewPassword,
-    } = updateUserDto;
+    const { login } = updateUserDto;
     const user = await this.userModel.findById(id);
-    if (user._id.toString() !== updatingUser._id.toString()) {
+    if (
+      user._id.toString() !== updatingUser._id.toString() &&
+      updatingUser.type !== UserType.admin
+    ) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś konta');
     }
     if (!user) {
@@ -109,7 +109,9 @@ export class UsersService {
         `Użytkownik o loginie ${login} już istnieje`,
       );
     }
-    return `This action updates a #${id} user`;
+    await this.userModel.updateOne({ _id: id }, updateUserDto);
+    const updatedUser = await this.userModel.findById(id);
+    return this.filter(updatedUser);
   }
 
   async remove(id: ObjectId, deletingUser: UserInterface) {
@@ -122,6 +124,14 @@ export class UsersService {
       deletingUser.type !== UserType.admin
     ) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś konta');
+    }
+    const userFiles = await this.fileModel.find({ authorId: id });
+    if (userFiles) {
+      userFiles.forEach(async (userFile) => {
+        await fs.unlink(
+          `${path.join(storageDir(), userFile.type)}/${userFile.fileName}`,
+        );
+      });
     }
     await this.fileModel.deleteMany({ authorId: id });
     return this.filter(await this.userModel.findByIdAndDelete(id));
