@@ -3,7 +3,6 @@ import * as mongoose from 'mongoose';
 import { Document } from 'mongoose';
 import { FileType } from 'src/enums/file.type';
 import { ObjectId } from '../../types/object-id';
-import { User } from 'src/users/schemas/user.schema';
 
 export type FileDocument = File & Document;
 
@@ -29,3 +28,4 @@ export class File {
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);
+FileSchema.index({ title: 'text' });

@@ -1,4 +1,4 @@
-import { IsEnum, IsString, Length } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
 import { FileType } from 'src/enums/file.type';
 
 export class CreateFileDto {
@@ -10,6 +10,6 @@ export class CreateFileDto {
   @Length(2, 100, { message: 'Temat musi mieć długość od 2 do 100 znaków' })
   subject: string;
 
-  @IsEnum(FileType, { message: 'Typ pliku musi być poprawny (pdf, img, pptx)' })
-  type: FileType;
+  // @IsEnum(FileType, { message: 'Typ pliku musi być poprawny (pdf, img, pptx)' })
+  // type: FileType;
 }

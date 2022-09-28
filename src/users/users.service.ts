@@ -7,13 +7,13 @@ import {
 import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Schema } from 'mongoose';
+import { Model } from 'mongoose';
 import { UserInterface } from 'src/interfaces/user.interface';
 import {
   CreateUserResponse,
   FindUserResponse,
+  FindUserWithFiles,
 } from 'src/responses/users.responses';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -23,12 +23,14 @@ import { ObjectId } from 'src/types/object-id';
 import { SortType } from 'src/enums/sort.type';
 import { UserType } from 'src/enums/user-type';
 import { storageDir } from 'src/utils/storage';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(File.name) private fileModel: Model<FileDocument>,
+    private readonly filesService: FilesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<CreateUserResponse> {
@@ -73,6 +75,31 @@ export class UsersService {
       throw new NotFoundException('Nie znaleziono użytkownika');
     }
     return this.filter(user);
+  }
+
+  async findUserByNameWithFiles(
+    name: string,
+    {
+      filters,
+      page,
+      sort,
+      perPage,
+    }: { filters: any; page: number; sort: SortType; perPage: number },
+  ): Promise<FindUserWithFiles> {
+    const user = await this.findByLogin(name);
+
+    filters.authorId = user._id;
+    const usersFilesResponse = await this.filesService.search({
+      filters,
+      page,
+      sort,
+      perPage,
+    });
+
+    return {
+      user,
+      filesData: usersFilesResponse,
+    };
   }
 
   async findByLogin(login: string): Promise<FindUserResponse> {
@@ -127,11 +154,13 @@ export class UsersService {
     }
     const userFiles = await this.fileModel.find({ authorId: id });
     if (userFiles) {
-      userFiles.forEach(async (userFile) => {
-        await fs.unlink(
-          `${path.join(storageDir(), userFile.type)}/${userFile.fileName}`,
-        );
-      });
+      await Promise.all(
+        userFiles.map(async (userFile) => {
+          await fs.unlink(
+            `${path.join(storageDir(), userFile.type)}/${userFile.fileName}`,
+          );
+        }),
+      );
     }
     await this.fileModel.deleteMany({ authorId: id });
     return this.filter(await this.userModel.findByIdAndDelete(id));

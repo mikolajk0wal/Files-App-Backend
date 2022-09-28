@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -16,6 +17,7 @@ import {
   CreateUserResponse,
   FindManyUsersResponse,
   FindUserResponse,
+  FindUserWithFiles,
 } from 'src/responses/users.responses';
 import * as mongoose from 'mongoose';
 import { IdParamPipe } from '../pipes/id-param.pipe';
@@ -50,6 +52,22 @@ export class UsersController {
     @Param('id', new IdParamPipe()) id: ObjectId,
   ): Promise<FindUserResponse> {
     return this.usersService.findOne(id);
+  }
+
+  @Get('/files/:name')
+  findUserByNameWithFiles(
+    @Param('name') name: string,
+    @Req() req: any,
+    @Query('page', new ParsePagePipe(1)) page: number,
+    @Query('sort') sort?: SortType,
+    @Query('per_page', new ParsePagePipe(9)) perPage?: number,
+  ): Promise<FindUserWithFiles> {
+    return this.usersService.findUserByNameWithFiles(name, {
+      filters: req.filters,
+      page,
+      sort,
+      perPage,
+    });
   }
 
   @Get('login/:login')

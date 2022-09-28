@@ -12,6 +12,7 @@ import { UsersService } from 'src/users/users.service';
 import { UsersModule } from 'src/users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { File, FileSchema } from 'src/files/schema/file.schema';
+import { FilesModule } from '../files/files.module';
 
 @Module({
   providers: [AuthService, LocalStrategy, JwtStrategy, UsersService],
@@ -32,6 +33,7 @@ import { File, FileSchema } from 'src/files/schema/file.schema';
       inject: [ConfigService],
     }),
     UsersModule,
+    FilesModule,
   ],
   exports: [AuthService],
 })

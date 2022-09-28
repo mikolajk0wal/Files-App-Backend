@@ -18,7 +18,7 @@ export class FileTypeGuard implements CanActivate {
     if (
       fileType !== FileType.img &&
       fileType !== FileType.pdf &&
-      fileType !== FileType.pptx
+      fileType !== FileType.other
     ) {
       throw new BadRequestException('Błędnie podany typ pliku');
     } else {

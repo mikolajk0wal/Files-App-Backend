@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   Res,
+  ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { CreateFileDto } from './dto/create-file.dto';
@@ -56,11 +58,6 @@ export class FilesController {
     return this.filesService.create(createFileDto, file, user);
   }
 
-  // @Get()
-  // findAll(): Promise<FindFilesResponse> {
-  //   return this.filesService.findAll();
-  // }
-
   @Get('file/:id')
   findFile(
     @Res() res: any,
@@ -78,30 +75,30 @@ export class FilesController {
 
   @Get('/type/:type')
   @UseGuards(SortGuard, FileTypeGuard)
-  findByType(
+  searchByType(
+    @Req() req: any,
     @Param('type') type: FileType,
     @Query('page', new ParsePagePipe(1)) page: number,
     @Query('sort') sort?: SortType,
+    @Query('per_page', new ParsePagePipe(9)) perPage?: number,
   ): Promise<FindFilesResponse> {
-    return this.filesService.findByType(type, sort, page);
-  }
-
-  @Get('/author/:author')
-  @UseGuards(SortGuard, FileTypeGuard)
-  findByAuthor(
-    @Param('author') author: string,
-    @Query('page', new ParsePagePipe(1)) page: number,
-    @Query('sort') sort?: SortType,
-  ): Promise<FindFilesResponse> {
-    return this.filesService.findByAuthor(author, sort, page);
+    return this.filesService.search({
+      filters: req.filters,
+      page,
+      sort,
+      type,
+      perPage,
+    });
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id', new IdParamPipe()) id: ObjectId,
     @Body() updateFileDto: UpdateFileDto,
+    @UserObj() user: UserInterface,
   ): Promise<UpdateFileResponse> {
-    return this.filesService.update(id, updateFileDto);
+    return this.filesService.update(id, updateFileDto, user);
   }
 
   @Delete(':id')
