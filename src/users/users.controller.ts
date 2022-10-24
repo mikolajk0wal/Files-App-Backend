@@ -28,6 +28,8 @@ import { ObjectId } from 'src/types/object-id';
 import { SortGuard } from 'src/guards/sort.guard';
 import { SortType } from 'src/enums/sort.type';
 import { ParsePagePipe } from 'src/pipes/parse-page.pipe';
+import { FindFilesResponse } from '../responses/files.responses';
+import { ChangeUsersPermissionsDto } from './dto/change-users-permissions.dto';
 
 @Controller('api/users')
 export class UsersController {
@@ -55,13 +57,13 @@ export class UsersController {
   }
 
   @Get('/files/:name')
-  findUserByNameWithFiles(
+  findUsersFiles(
     @Param('name') name: string,
     @Req() req: any,
     @Query('page', new ParsePagePipe(1)) page: number,
     @Query('sort') sort?: SortType,
     @Query('per_page', new ParsePagePipe(9)) perPage?: number,
-  ): Promise<FindUserWithFiles> {
+  ): Promise<FindFilesResponse> {
     return this.usersService.findUserByNameWithFiles(name, {
       filters: req.filters,
       page,
@@ -83,6 +85,16 @@ export class UsersController {
     @UserObj() user: UserInterface,
   ) {
     return this.usersService.update(id, updateUserDto, user);
+  }
+
+  @Patch('changePerms/:id')
+  @UseGuards(JwtAuthGuard)
+  changeUsersPermissions(
+    @Param('id', new IdParamPipe()) id: ObjectId,
+    @Body() { newRole }: ChangeUsersPermissionsDto,
+    @UserObj() user: UserInterface,
+  ) {
+    return this.usersService.changeUsersPermissions(id, user, newRole);
   }
 
   @Delete(':id')

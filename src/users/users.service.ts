@@ -4,7 +4,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,7 +12,7 @@ import { UserInterface } from 'src/interfaces/user.interface';
 import {
   CreateUserResponse,
   FindUserResponse,
-  FindUserWithFiles,
+  UpdateUserResponse,
 } from 'src/responses/users.responses';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -24,6 +23,8 @@ import { SortType } from 'src/enums/sort.type';
 import { UserType } from 'src/enums/user-type';
 import { storageDir } from 'src/utils/storage';
 import { FilesService } from '../files/files.service';
+import { FindFilesResponse } from '../responses/files.responses';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -85,21 +86,17 @@ export class UsersService {
       sort,
       perPage,
     }: { filters: any; page: number; sort: SortType; perPage: number },
-  ): Promise<FindUserWithFiles> {
+  ): Promise<FindFilesResponse> {
     const user = await this.findByLogin(name);
 
     filters.authorId = user._id;
-    const usersFilesResponse = await this.filesService.search({
+
+    return await this.filesService.search({
       filters,
       page,
       sort,
       perPage,
     });
-
-    return {
-      user,
-      filesData: usersFilesResponse,
-    };
   }
 
   async findByLogin(login: string): Promise<FindUserResponse> {
@@ -116,27 +113,76 @@ export class UsersService {
     id: ObjectId,
     updateUserDto: UpdateUserDto,
     updatingUser: UserInterface,
-  ) {
-    const { login } = updateUserDto;
+  ): Promise<UpdateUserResponse> {
     const user = await this.userModel.findById(id);
+
+    const { login, retypedNewPassword, password, newPassword } = updateUserDto;
+
     if (
       user._id.toString() !== updatingUser._id.toString() &&
       updatingUser.type !== UserType.admin
     ) {
-      throw new UnauthorizedException('Nie możesz usunąć czyjegoś konta');
+      throw new UnauthorizedException('Nie możesz edytować czyjegoś konta');
     }
+
     if (!user) {
       throw new NotFoundException('Nie znaleziono użytkownika');
     }
+
+    if (newPassword !== retypedNewPassword) {
+      throw new UnauthorizedException('Podane hasła nie są takie same');
+    }
+
+    const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
+
+    if (!passwordsMatch) {
+      throw new UnauthorizedException('Podano błędne hasło');
+    }
+
+    const passwordHash = newPassword
+      ? await bcrypt.hash(newPassword, await bcrypt.genSalt(10))
+      : undefined;
+
     const checkLoginExist = login
-      ? await this.userModel.findOne({ login })
+      ? !!(await this.userModel.findOne({ login }))
       : false;
     if (checkLoginExist) {
       throw new BadRequestException(
         `Użytkownik o loginie ${login} już istnieje`,
       );
     }
-    await this.userModel.updateOne({ _id: id }, updateUserDto);
+
+    await this.userModel.updateOne({ _id: id }, { login, passwordHash });
+    const updatedUser = await this.userModel.findById(id);
+
+    if (login) {
+      await this.fileModel.updateMany(
+        { authorName: user.login },
+        { authorName: login },
+      );
+    }
+
+    return this.filter(updatedUser);
+  }
+
+  async changeUsersPermissions(
+    id: ObjectId,
+    prottingUser: UserInterface,
+    newRole: 'normal' | 'moderator',
+  ): Promise<UpdateUserResponse> {
+    const user = await this.userModel.findById(id);
+    if (prottingUser.type !== UserType.admin) {
+      throw new UnauthorizedException(
+        'Nie możesz promować innych użytkowników',
+      );
+    }
+
+    if (user.type === UserType.admin) {
+      throw new BadRequestException('Nie możesz promować admina');
+    }
+
+    await this.userModel.updateOne({ _id: id }, { type: newRole as UserType });
+
     const updatedUser = await this.userModel.findById(id);
     return this.filter(updatedUser);
   }

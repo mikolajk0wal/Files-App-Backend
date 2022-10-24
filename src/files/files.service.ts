@@ -25,10 +25,14 @@ import { File, FileDocument } from './schema/file.schema';
 import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
 import { UserType } from 'src/enums/user-type';
+import { User, UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class FilesService {
-  constructor(@InjectModel(File.name) private fileModel: Model<FileDocument>) {}
+  constructor(
+    @InjectModel(File.name) private fileModel: Model<FileDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) {}
 
   async create(
     createFileDto: CreateFileDto,
@@ -101,7 +105,7 @@ export class FilesService {
         updatedAt: sortOrder,
       };
     } else {
-      sortBy = { updatedAt: sortOrder };
+      sortBy = { createdAt: sortOrder };
     }
     if (type) {
       filters.type = type;
@@ -135,12 +139,10 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
-    //@TODO Zrobić żeby moderator nie mógł edywać i usuwać plików dodanych przez admina i innych modów (To może tylko admin)
-    if (
-      file.authorId.toString() !== user._id.toString() &&
-      user.type !== UserType.admin &&
-      user.type !== UserType.moderator
-    ) {
+
+    const canUpdate = await this.canUpdate(user, file.authorId.toString());
+
+    if (!canUpdate) {
       throw new UnauthorizedException('Nie możesz edytować czyjegoś pliku');
     }
 
@@ -154,15 +156,22 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
-    if (
-      file.authorId.toString() !== user._id.toString() &&
-      user.type !== UserType.admin &&
-      user.type !== UserType.moderator
-    ) {
+    const canRemove = await this.canUpdate(user, file.authorId.toString());
+    if (!canRemove) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś pliku');
     }
     await fs.unlink(`${path.join(storageDir(), file.type)}/${file.fileName}`);
     return this.filter(await this.fileModel.findByIdAndDelete(id));
+  }
+
+  //Check if user can edit or remove files
+  private async canUpdate(user: UserInterface, authorId: string) {
+    const owner = await this.userModel.findOne({ _id: authorId });
+    return (
+      authorId === user._id.toString() ||
+      user.type === UserType.admin ||
+      (user.type === UserType.moderator && owner.type === UserType.normal)
+    );
   }
 
   private filter(file: any): FileInterface {

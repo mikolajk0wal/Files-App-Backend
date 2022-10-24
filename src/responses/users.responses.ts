@@ -3,9 +3,10 @@ import { FindFilesResponse } from './files.responses';
 
 export type CreateUserResponse = UserInterface;
 export type FindUserResponse = UserInterface;
+export type UpdateUserResponse = UserInterface;
 
 export type FindUserWithFiles = {
-  filesData: FindFilesResponse;
+  filesData?: FindFilesResponse;
   user: UserInterface;
 };
 
