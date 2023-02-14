@@ -14,7 +14,10 @@ export class FileTypeGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
-    const fileType = request?.params?.type ?? null;
+    const fileType = request?.query?.type ?? null;
+    if (!fileType) {
+      return true;
+    }
     if (
       fileType !== FileType.img &&
       fileType !== FileType.pdf &&

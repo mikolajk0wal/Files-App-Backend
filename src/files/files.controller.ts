@@ -22,6 +22,7 @@ import {
   DeleteFileResponse,
   FindFileResponse,
   FindFilesResponse,
+  GetSearchSuggestionsResponse,
   UpdateFileResponse,
 } from 'src/responses/files.responses';
 import { FileType } from 'src/enums/file.type';
@@ -73,14 +74,17 @@ export class FilesController {
     return this.filesService.findById(id);
   }
 
-  @Get('/type/:type')
+  @Get('')
   @UseGuards(SortGuard, FileTypeGuard)
-  searchByType(
+  search(
     @Req() req: any,
-    @Param('type') type: FileType,
+    @Query('type') type: FileType,
     @Query('page', new ParsePagePipe(1)) page: number,
     @Query('sort') sort?: SortType,
     @Query('per_page', new ParsePagePipe(9)) perPage?: number,
+    @Query('q') title?: string,
+    @Query('subject') subject?: string,
+    @Query('authorName') authorName?: string,
   ): Promise<FindFilesResponse> {
     return this.filesService.search({
       filters: req.filters,
@@ -88,7 +92,18 @@ export class FilesController {
       sort,
       type,
       perPage,
+      subject,
+      title,
+      authorName,
     });
+  }
+
+  @Get('autocomplete/:title')
+  getSearchSuggestions(
+    @Param('title') title: string,
+    @Query('authorName') authorName?: string,
+  ): Promise<GetSearchSuggestionsResponse> {
+    return this.filesService.getSearchSuggestions(title, authorName);
   }
 
   @Patch(':id')

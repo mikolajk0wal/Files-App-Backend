@@ -27,7 +27,7 @@ export class GetFileFiltersMiddleware implements NestMiddleware {
       };
     }
 
-    req.filters = { ...schemaFilters, ...searchFilter };
+    req.filters = { ...schemaFilters };
     next();
   }
 }

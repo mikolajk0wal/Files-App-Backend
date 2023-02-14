@@ -28,6 +28,6 @@ export class FilesModule implements NestModule {
   configure(consumer: MiddlewareConsumer): any {
     consumer
       .apply(GetFileFiltersMiddleware)
-      .forRoutes({ path: '/api/files/type/:type', method: RequestMethod.GET });
+      .forRoutes({ path: '/api/files', method: RequestMethod.GET });
   }
 }

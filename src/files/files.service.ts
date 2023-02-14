@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -16,6 +17,7 @@ import {
   DeleteFileResponse,
   FindFileResponse,
   FindFilesResponse,
+  GetSearchSuggestionsResponse,
   UpdateFileResponse,
 } from 'src/responses/files.responses';
 import { getFolderName, storageDir } from 'src/utils/storage';
@@ -26,6 +28,7 @@ import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
 import { UserType } from 'src/enums/user-type';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { generateWildcard } from '../utils/generateWildcard';
 
 @Injectable()
 export class FilesService {
@@ -86,6 +89,9 @@ export class FilesService {
     page = 1,
     sort = SortType.desc,
     type,
+    subject,
+    title,
+    authorName,
     perPage = 9,
   }: {
     filters: any;
@@ -93,41 +99,107 @@ export class FilesService {
     sort?: SortType;
     type?: FileType;
     perPage?: number;
+    title?: string;
+    subject?: string;
+    authorName?: string;
   }): Promise<FindFilesResponse> {
     const skip = (page - 1) * perPage;
-    const sortOrder = sort ? sort : 'desc';
-    const isSearching = !!filters['$text'];
+    const sortOrder = sort ? (sort === SortType.desc ? -1 : 1) : -1;
+    const isSearching = !!title;
     let sortBy = {};
 
     if (isSearching) {
       sortBy = {
-        score: { $meta: 'textScore' },
+        score: -1,
         updatedAt: sortOrder,
       };
     } else {
-      sortBy = { createdAt: sortOrder };
+      sortBy = { updatedAt: sortOrder };
     }
     if (type) {
       filters.type = type;
     }
-    const files = await this.fileModel
-      .find(filters, isSearching ? { score: { $meta: 'textScore' } } : {})
-      .skip(skip)
-      .limit(perPage)
-      .sort(sortBy)
-      .exec();
-    if (!files.length) {
-      throw new NotFoundException('Nie znaleziono plików');
+
+    const pipeline: any = [
+      { $match: filters },
+      {
+        $addFields: {
+          score: { $meta: 'searchScore' },
+        },
+      },
+      { $sort: sortBy },
+    ];
+
+    if (isSearching) {
+      pipeline.unshift({
+        $search: {
+          index: 'default',
+          text: {
+            query: title,
+            path: 'title',
+            fuzzy: {},
+          },
+        },
+      });
     }
 
-    const count = await this.fileModel.countDocuments(filters).exec();
+    try {
+      const files = await this.fileModel.collection
+        .aggregate([...pipeline, { $skip: skip }, { $limit: perPage }])
+        .toArray();
+      if (!files.length) {
+        throw new NotFoundException('Nie znaleziono plików');
+      }
 
-    return {
-      files: files.map((file) => this.filter(file)),
-      requiredPages: Math.ceil(count / perPage),
-      count,
-      page,
-    };
+      const [{ count }] = await this.fileModel.collection
+        .aggregate([
+          ...pipeline,
+          {
+            $count: 'count',
+          },
+        ])
+        .toArray();
+      return {
+        files: files.map((file) => this.filter(file)),
+        requiredPages: Math.ceil(count / perPage),
+        count,
+        page,
+      };
+    } catch (e) {
+      if (e instanceof HttpException) {
+        throw e;
+      }
+      throw new HttpException('Spróbuj jeszcze raz', 400);
+    }
+  }
+  async getSearchSuggestions(
+    title: string,
+    authorName?: string,
+  ): Promise<GetSearchSuggestionsResponse> {
+    const filters: any = {};
+    if (authorName) {
+      filters.authorName = authorName;
+    }
+    console.log(filters);
+    const pipeline: any = [
+      {
+        $search: {
+          index: 'autocomplete',
+          autocomplete: {
+            query: title,
+            path: 'title',
+            tokenOrder: 'sequential',
+          },
+        },
+      },
+      { $match: filters },
+      { $limit: 10 },
+      { $project: { title: 1 } },
+    ];
+
+    return (await this.fileModel.collection
+      .aggregate(pipeline)
+      .toArray()) as GetSearchSuggestionsResponse;
   }
 
   async update(
