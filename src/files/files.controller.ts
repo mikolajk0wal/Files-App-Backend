@@ -98,12 +98,14 @@ export class FilesController {
     });
   }
 
+  @UseGuards(FileTypeGuard)
   @Get('autocomplete/:title')
   getSearchSuggestions(
     @Param('title') title: string,
     @Query('authorName') authorName?: string,
+    @Query('type') type?: FileType,
   ): Promise<GetSearchSuggestionsResponse> {
-    return this.filesService.getSearchSuggestions(title, authorName);
+    return this.filesService.getSearchSuggestions(title, { authorName, type });
   }
 
   @Patch(':id')

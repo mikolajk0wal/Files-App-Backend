@@ -174,13 +174,15 @@ export class FilesService {
   }
   async getSearchSuggestions(
     title: string,
-    authorName?: string,
+    { authorName, type }: { authorName?: string; type?: FileType },
   ): Promise<GetSearchSuggestionsResponse> {
     const filters: any = {};
     if (authorName) {
       filters.authorName = authorName;
     }
-    console.log(filters);
+    if (type) {
+      filters.type = type;
+    }
     const pipeline: any = [
       {
         $search: {
