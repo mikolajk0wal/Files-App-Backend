@@ -28,7 +28,6 @@ import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
 import { UserType } from 'src/enums/user-type';
 import { User, UserDocument } from '../users/schemas/user.schema';
-import { generateWildcard } from '../utils/generateWildcard';
 
 @Injectable()
 export class FilesService {
