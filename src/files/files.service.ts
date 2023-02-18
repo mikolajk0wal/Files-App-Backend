@@ -51,6 +51,7 @@ export class FilesService {
       authorId: user._id,
       authorName: user.login,
       fileName: uploadedFile.filename,
+      fileSize: uploadedFile.size,
       type: fileType,
     });
     return this.filter(file);
@@ -258,6 +259,7 @@ export class FilesService {
       createdAt,
       updatedAt,
       _id,
+      fileSize,
     } = file;
     return {
       _id,
@@ -268,6 +270,7 @@ export class FilesService {
       type,
       createdAt,
       updatedAt,
+      fileSize,
     };
   }
 }
