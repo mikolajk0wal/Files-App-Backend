@@ -112,10 +112,10 @@ export class FilesService {
     if (isSearching) {
       sortBy = {
         score: -1,
-        updatedAt: sortOrder,
+        createdAt: sortOrder,
       };
     } else {
-      sortBy = { updatedAt: sortOrder };
+      sortBy = { createdAt: sortOrder };
     }
     if (type) {
       filters.type = type;
