@@ -39,6 +39,7 @@ import { IdParamPipe } from 'src/pipes/id-param.pipe';
 import { FileTypeGuard } from 'src/guards/file-type.guard';
 import { ObjectId } from 'src/types/object-id';
 import { ParsePagePipe } from 'src/pipes/parse-page.pipe';
+import { FilesSortByProperty } from '../enums/sort-by';
 
 @Controller('api/files')
 export class FilesController {
@@ -81,6 +82,7 @@ export class FilesController {
     @Query('type') type: FileType,
     @Query('page', new ParsePagePipe(1)) page: number,
     @Query('sort') sort?: SortType,
+    @Query('sort_by') sortBy?: FilesSortByProperty,
     @Query('per_page', new ParsePagePipe(9)) perPage?: number,
     @Query('q') title?: string,
     @Query('subject') subject?: string,
@@ -90,6 +92,7 @@ export class FilesController {
       filters: req.filters,
       page,
       sort,
+      sortBy,
       type,
       perPage,
       subject,

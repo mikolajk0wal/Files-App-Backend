@@ -28,6 +28,7 @@ import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
 import { UserType } from 'src/enums/user-type';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { FilesSortByProperty } from '../enums/sort-by';
 
 @Injectable()
 export class FilesService {
@@ -92,11 +93,13 @@ export class FilesService {
     subject,
     title,
     authorName,
+    sortBy: sortByProperty,
     perPage = 9,
   }: {
     filters: any;
     page?: number;
     sort?: SortType;
+    sortBy?: FilesSortByProperty;
     type?: FileType;
     perPage?: number;
     title?: string;
@@ -114,7 +117,7 @@ export class FilesService {
         createdAt: sortOrder,
       };
     } else {
-      sortBy = { createdAt: sortOrder };
+      sortBy = { [sortByProperty ? sortByProperty : 'createdAt']: sortOrder };
     }
     if (type) {
       filters.type = type;
