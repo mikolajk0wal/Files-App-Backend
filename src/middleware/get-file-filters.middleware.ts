@@ -18,14 +18,6 @@ export class GetFileFiltersMiddleware implements NestMiddleware {
         }
       }
     });
-    let searchFilter = {};
-    if (filters.q) {
-      searchFilter = {
-        $text: {
-          $search: filters.q,
-        },
-      };
-    }
 
     req.filters = { ...schemaFilters };
     next();
