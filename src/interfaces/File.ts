@@ -10,4 +10,5 @@ export interface FileInterface {
   type: FileType;
   createdAt: string;
   updatedAt: string;
+  fileSize: number;
 }

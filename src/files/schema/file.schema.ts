@@ -23,6 +23,9 @@ export class File {
   @Prop({ type: String, required: true })
   fileName: string;
 
+  @Prop({ type: Number, required: true })
+  fileSize: number;
+
   @Prop({ enum: FileType })
   type: FileType;
 }
