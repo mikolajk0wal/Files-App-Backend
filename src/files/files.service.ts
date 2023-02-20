@@ -90,7 +90,7 @@ export class FilesService {
 
   async findUnique(
     property: UniqueFileProp,
-    value: string,
+    value: string | ObjectId,
   ): Promise<FindFileResponse> {
     const file = await this.fileModel.findOne({ [property]: value });
     if (!file) {
