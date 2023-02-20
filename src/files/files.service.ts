@@ -65,8 +65,12 @@ export class FilesService {
     return this.filter(file);
   }
 
-  async sendFile(id: ObjectId, res: any): Promise<any> {
-    const file = await this.fileModel.findById(id);
+  async sendFile(
+    property: UniqueFileProp,
+    value: ObjectId | string,
+    res: any,
+  ): Promise<any> {
+    const file = await this.fileModel.findOne({ [property]: value });
     if (!file) {
       throw new NotFoundException('Cannot find file');
     }
