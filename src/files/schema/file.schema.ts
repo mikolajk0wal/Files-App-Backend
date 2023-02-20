@@ -11,6 +11,15 @@ export class File {
   @Prop({ type: String, minlength: 2, maxlength: 100, required: true })
   title: string;
 
+  @Prop({
+    type: String,
+    minlength: 2,
+    maxlength: 100,
+    required: true,
+    unique: true,
+  })
+  slug: string;
+
   @Prop({ type: String, minlength: 2, maxlength: 100, required: true })
   subject: string;
 

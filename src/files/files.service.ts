@@ -46,6 +46,11 @@ export class FilesService {
       throw new BadRequestException('Nie dodano pliku');
     }
     const fileType = getFolderName(uploadedFile);
+
+    const sameTitleFilesCount = await this.fileModel.count({
+      title: createFileDto.title,
+    });
+    const slug = this.generateSlug(sameTitleFilesCount, createFileDto.title);
     const file = await this.fileModel.create({
       ...createFileDto,
       authorId: user._id,
@@ -53,6 +58,7 @@ export class FilesService {
       fileName: uploadedFile.filename,
       fileSize: uploadedFile.size,
       type: fileType,
+      slug,
     });
     return this.filter(file);
   }
@@ -223,7 +229,19 @@ export class FilesService {
       throw new UnauthorizedException('Nie możesz edytować czyjegoś pliku');
     }
 
-    await this.fileModel.findByIdAndUpdate(id, updateFileDto);
+    let slug;
+
+    if (updateFileDto.title) {
+      const sameTitleFilesCount = await this.fileModel.count({
+        title: updateFileDto.title,
+      });
+      slug = this.generateSlug(sameTitleFilesCount, updateFileDto.title);
+    }
+
+    await this.fileModel.findByIdAndUpdate(id, {
+      ...updateFileDto,
+      slug: slug ? slug : file.slug,
+    });
     const updatedFile = await this.fileModel.findById(id);
     return this.filter(updatedFile);
   }
@@ -251,6 +269,22 @@ export class FilesService {
     );
   }
 
+  private generateSlug(sameTitleFiles: number, title: string): string {
+    const formattedTitle = title
+      .toLowerCase()
+      .split(' ')
+      .join('-')
+      .replace('(', '')
+      .replace(')', '');
+
+    const slug =
+      sameTitleFiles === 0
+        ? `${formattedTitle}`
+        : `${formattedTitle}-${sameTitleFiles + 1}`;
+
+    return slug;
+  }
+
   private filter(file: any): FileInterface {
     const {
       title,
@@ -262,10 +296,12 @@ export class FilesService {
       updatedAt,
       _id,
       fileSize,
+      slug,
     } = file;
     return {
       _id,
       title,
+      slug,
       authorId,
       authorName,
       subject,
