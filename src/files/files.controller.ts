@@ -61,11 +61,11 @@ export class FilesController {
   }
 
   @Get('file/:id')
-  findFile(
+  sendFile(
     @Res() res: any,
     @Param('id', new IdParamPipe()) id: ObjectId,
   ): Promise<any> {
-    return this.filesService.findFile(id, res);
+    return this.filesService.sendFile(id, res);
   }
 
   @Get(':id')
