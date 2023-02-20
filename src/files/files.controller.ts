@@ -72,7 +72,7 @@ export class FilesController {
   findById(
     @Param('id', new IdParamPipe()) id: ObjectId,
   ): Promise<FindFileResponse> {
-    return this.filesService.findById(id);
+    return this.filesService.findUnique('_id', id.toString());
   }
 
   @Get('')

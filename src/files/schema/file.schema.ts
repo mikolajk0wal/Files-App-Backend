@@ -5,6 +5,7 @@ import { FileType } from 'src/enums/file.type';
 import { ObjectId } from '../../types/object-id';
 
 export type FileDocument = File & Document;
+export type UniqueFileProp = '_id' | 'slug';
 
 @Schema({ timestamps: true })
 export class File {

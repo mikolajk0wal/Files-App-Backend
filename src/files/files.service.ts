@@ -23,7 +23,7 @@ import {
 import { getFolderName, storageDir } from 'src/utils/storage';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
-import { File, FileDocument } from './schema/file.schema';
+import { File, FileDocument, UniqueFileProp } from './schema/file.schema';
 import { UserInterface } from 'src/interfaces/user.interface';
 import { ObjectId } from 'src/types/object-id';
 import { UserType } from 'src/enums/user-type';
@@ -82,8 +82,11 @@ export class FilesService {
     }
   }
 
-  async findById(id: ObjectId): Promise<FindFileResponse> {
-    const file = await this.fileModel.findById(id);
+  async findUnique(
+    property: UniqueFileProp,
+    value: string,
+  ): Promise<FindFileResponse> {
+    const file = await this.fileModel.findOne({ [property]: value });
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
