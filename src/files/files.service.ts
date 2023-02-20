@@ -300,9 +300,11 @@ export class FilesService {
       _id,
       fileSize,
       slug,
+      extension,
     } = file;
     return {
       _id,
+      extension,
       title,
       slug,
       authorId,

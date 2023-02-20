@@ -21,6 +21,9 @@ export class File {
   })
   slug: string;
 
+  @Prop({ type: String, minlength: 1, maxlength: 100, required: true })
+  extension: string;
+
   @Prop({ type: String, minlength: 2, maxlength: 100, required: true })
   subject: string;
 
