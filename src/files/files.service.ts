@@ -47,7 +47,7 @@ export class FilesService {
     }
     const fileType = getFolderName(uploadedFile);
 
-    const extension = uploadedFile.filename.split('.').pop();
+    const extension = uploadedFile.originalname.split('.').pop();
     const sameTitleFilesCount = await this.fileModel.count({
       title: createFileDto.title,
     });
