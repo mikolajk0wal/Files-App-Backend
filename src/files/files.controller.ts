@@ -75,6 +75,11 @@ export class FilesController {
     return this.filesService.findUnique('_id', id.toString());
   }
 
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string): Promise<FindFileResponse> {
+    return this.filesService.findUnique('slug', slug);
+  }
+
   @Get('')
   @UseGuards(SortGuard, FileTypeGuard)
   search(
