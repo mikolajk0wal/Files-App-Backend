@@ -8,6 +8,7 @@ import mongooseConfig from './config/mongoose.config';
 import { FrontendMiddleware } from './middleware/frontend.middleware';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client', 'build'),
     }),
+    CommentsModule,
   ],
   controllers: [],
   providers: [],
