@@ -15,3 +15,5 @@ export interface GetCommentsResponse {
   fileId: ObjectId;
   comments: Comment[];
 }
+
+export type CreateCommentResponse = Comment;

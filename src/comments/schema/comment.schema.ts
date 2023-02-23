@@ -23,7 +23,11 @@ export class Comment {
   @Prop({ required: true, type: mongoose.Schema.Types.ObjectId })
   fileId: ObjectId;
 
-  @Prop({ required: false, type: mongoose.Schema.Types.ObjectId })
+  @Prop({
+    required: false,
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+  })
   parentId?: ObjectId;
 }
 

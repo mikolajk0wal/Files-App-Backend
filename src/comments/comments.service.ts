@@ -3,8 +3,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { File, FileDocument } from '../files/schema/file.schema';
 import { Model } from 'mongoose';
 import { Comment, CommentDocument } from './schema/comment.schema';
-import { GetCommentsResponse } from '../responses/comments.responses';
+import {
+  CreateCommentResponse,
+  GetCommentsResponse,
+} from '../responses/comments.responses';
 import { ObjectId } from '../types/object-id';
+import { UserInterface } from '../interfaces/user.interface';
 
 @Injectable()
 export class CommentsService {
@@ -22,5 +26,33 @@ export class CommentsService {
       fileId,
       comments,
     };
+  }
+
+  async createComment(
+    fileId: ObjectId,
+    user: UserInterface,
+    message: string,
+    parentId?: string,
+  ): Promise<CreateCommentResponse> {
+    const file = await this.fileModel.findById(fileId);
+    if (!file) {
+      throw new NotFoundException('Plik o podanym id nie istnieje');
+    }
+    if (parentId) {
+      const parentComment = await this.commentModel.findById(parentId);
+      if (!parentComment) {
+        throw new NotFoundException(
+          'Komentarz na ktory chcesz odpowiedziec nie istnieje',
+        );
+      }
+    }
+    return await this.commentModel.create({
+      fileId,
+      message,
+      authorId: user._id,
+      authorName: user.login,
+      authorRole: user.type,
+      parentId,
+    });
   }
 }
