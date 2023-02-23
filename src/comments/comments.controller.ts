@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -36,7 +37,7 @@ export class CommentsController {
     @UserObj() user: UserInterface,
     @Body() createCommentDto: CreateCommentDto,
     @Param('fileId', new IdParamPipe()) fileId: ObjectId,
-    @Query('parent_id', new IdParamPipe(false)) parentId?: string,
+    @Query('parent_id', new IdParamPipe(true)) parentId?: string,
   ): Promise<CreateCommentResponse> {
     return this.commentsService.createComment(
       fileId,
@@ -44,5 +45,14 @@ export class CommentsController {
       createCommentDto.message,
       parentId,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/:commentId')
+  deleteComment(
+    @UserObj() user: UserInterface,
+    @Param('commentId', new IdParamPipe()) commentId: ObjectId,
+  ) {
+    return this.commentsService.deleteComment(commentId, user);
   }
 }

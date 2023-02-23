@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { File, FileDocument } from '../files/schema/file.schema';
 import { Model } from 'mongoose';
 import { Comment, CommentDocument } from './schema/comment.schema';
 import {
   CreateCommentResponse,
+  DeleteCommentResponse,
   GetCommentsResponse,
 } from '../responses/comments.responses';
 import { ObjectId } from '../types/object-id';
 import { UserInterface } from '../interfaces/user.interface';
+import { UserType } from '../enums/user-type';
 
 @Injectable()
 export class CommentsService {
@@ -54,5 +60,25 @@ export class CommentsService {
       authorRole: user.type,
       parentId,
     });
+  }
+
+  async deleteComment(
+    commentId: ObjectId,
+    user: UserInterface,
+  ): Promise<DeleteCommentResponse> {
+    const comment = await this.commentModel.findById(commentId);
+    if (!comment) {
+      throw new NotFoundException('Komentarz ktory chcesz usunac nie istnieje');
+    }
+    if (
+      user.login !== comment.authorName &&
+      user.type !== UserType.moderator &&
+      user.type !== UserType.admin
+    ) {
+      throw new UnauthorizedException('Nie możesz usunąć czyjegos komentarza');
+    }
+    await this.commentModel.deleteOne({ _id: commentId });
+
+    return comment;
   }
 }

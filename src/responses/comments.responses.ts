@@ -17,3 +17,4 @@ export interface GetCommentsResponse {
 }
 
 export type CreateCommentResponse = Comment;
+export type DeleteCommentResponse = Comment;
