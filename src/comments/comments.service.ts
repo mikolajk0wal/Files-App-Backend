@@ -24,7 +24,9 @@ export class CommentsService {
   ) {}
 
   async getFilesComments(fileId: ObjectId): Promise<GetCommentsResponse> {
-    const comments = await this.commentModel.find({ fileId });
+    const comments = await this.commentModel
+      .find({ fileId })
+      .sort({ createdAt: 'desc' });
     if (!comments.length) {
       throw new NotFoundException('Nie znaleziono komentarzy');
     }
