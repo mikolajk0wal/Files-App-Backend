@@ -68,22 +68,17 @@ export class FilesService {
     value: ObjectId | string,
     res: any,
   ): Promise<any> {
-    const file = await this.fileModel.findOne({ [property]: value });
-    if (!file) {
-      throw new NotFoundException('Cannot find file');
-    }
+    const file = await this.findUnique(property, value);
     const exists = await this.checkIfFileExistInFolder(
       file.type,
       file.fileName,
     );
-
-    if (exists) {
-      res.sendFile(file.fileName, {
-        root: path.join(storageDir(), file.type),
-      });
-    } else {
+    if (!exists) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
+    res.sendFile(file.fileName, {
+      root: path.join(storageDir(), file.type),
+    });
   }
 
   async findUnique(property: UniqueFileProp, value: string | ObjectId) {
