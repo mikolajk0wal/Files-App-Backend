@@ -86,7 +86,6 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
-
     return file;
   }
 
@@ -116,7 +115,7 @@ export class FilesService {
       sortByProperty,
     });
 
-    const pipeline: any = [
+    const pipeline: object[] = [
       { $match: filters },
       {
         $addFields: {
@@ -139,34 +138,20 @@ export class FilesService {
       });
     }
 
-    try {
-      const files = await this.fileModel.collection
-        .aggregate([...pipeline, { $skip: skip }, { $limit: perPage }])
-        .toArray();
-      if (!files.length) {
-        throw new NotFoundException('Nie znaleziono plików');
-      }
-
-      const [{ count }] = await this.fileModel.collection
-        .aggregate([
-          ...pipeline,
-          {
-            $count: 'count',
-          },
-        ])
-        .toArray();
-      return {
-        files: files,
-        requiredPages: Math.ceil(count / perPage),
-        count,
-        page,
-      };
-    } catch (e) {
-      if (e instanceof HttpException) {
-        throw e;
-      }
-      throw new HttpException('Spróbuj jeszcze raz', 400);
+    const files = await this.fileModel.collection
+      .aggregate([...pipeline, { $skip: skip }, { $limit: perPage }])
+      .toArray();
+    if (!files.length) {
+      throw new NotFoundException('Nie znaleziono plików');
     }
+
+    const count = await this.countFilesBasedOnPipeline(pipeline);
+    return {
+      files: files,
+      requiredPages: Math.ceil(count / perPage),
+      count,
+      page,
+    };
   }
   async getSearchSuggestions(
     title: string,
@@ -177,7 +162,7 @@ export class FilesService {
       { key: 'type', value: type },
     ]);
 
-    const pipeline: any = [
+    const pipeline = [
       {
         $search: {
           index: 'autocomplete',
@@ -266,6 +251,18 @@ export class FilesService {
       updatedAt,
       fileSize,
     };
+  }
+
+  private async countFilesBasedOnPipeline(pipeline: object[]) {
+    const [{ count }] = await this.fileModel.collection
+      .aggregate([
+        ...pipeline,
+        {
+          $count: 'count',
+        },
+      ])
+      .toArray();
+    return count;
   }
 
   private async checkIfFileExistInFolder(type: FileType, name: string) {
