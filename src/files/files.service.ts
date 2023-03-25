@@ -48,10 +48,8 @@ export class FilesService {
     const fileType = getFolderName(uploadedFile);
 
     const extension = uploadedFile.originalname.split('.').pop();
-    const sameTitleFilesCount = await this.fileModel.count({
-      title: createFileDto.title,
-    });
-    const slug = this.generateSlug(sameTitleFilesCount, createFileDto.title);
+
+    const slug = await this.generateSlug(createFileDto.title);
     const file = await this.fileModel.create({
       ...createFileDto,
       authorId: user._id,
@@ -227,18 +225,13 @@ export class FilesService {
       throw new UnauthorizedException('Nie możesz edytować czyjegoś pliku');
     }
 
-    let slug;
-
-    if (updateFileDto.title) {
-      const sameTitleFilesCount = await this.fileModel.count({
-        title: updateFileDto.title,
-      });
-      slug = this.generateSlug(sameTitleFilesCount, updateFileDto.title);
-    }
+    const slug = updateFileDto.title
+      ? await this.generateSlug(updateFileDto.title)
+      : file.slug;
 
     await this.fileModel.findByIdAndUpdate(id, {
       ...updateFileDto,
-      slug: slug ? slug : file.slug,
+      slug,
     });
     const updatedFile = await this.fileModel.findById(id);
     return this.filter(updatedFile);
@@ -266,7 +259,7 @@ export class FilesService {
     );
   }
 
-  private generateSlug(sameTitleFiles: number, title: string): string {
+  private async generateSlug(title: string) {
     const formattedTitle = title
       .toLowerCase()
       .split(' ')
@@ -274,10 +267,14 @@ export class FilesService {
       .replace('(', '')
       .replace(')', '');
 
+    const sameTitleFilesCount = await this.fileModel.count({
+      title,
+    });
+
     const slug =
-      sameTitleFiles === 0
+      sameTitleFilesCount === 0
         ? `${formattedTitle}`
-        : `${formattedTitle}-${sameTitleFiles + 1}`;
+        : `${formattedTitle}-${sameTitleFilesCount + 1}`;
 
     return slug;
   }
