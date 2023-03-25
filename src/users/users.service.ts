@@ -86,7 +86,7 @@ export class UsersService {
       sort,
       perPage,
     }: { filters: any; page: number; sort: SortType; perPage: number },
-  ): Promise<FindFilesResponse> {
+  ) {
     const user = await this.findByLogin(name);
 
     filters.authorId = user._id;

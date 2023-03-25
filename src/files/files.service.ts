@@ -41,7 +41,7 @@ export class FilesService {
     createFileDto: CreateFileDto,
     uploadedFile: Express.Multer.File,
     user: UserInterface,
-  ): Promise<CreateFileResponse> {
+  ) {
     if (!uploadedFile) {
       throw new BadRequestException('Nie dodano pliku');
     }
@@ -60,7 +60,7 @@ export class FilesService {
       slug,
       extension,
     });
-    return this.filter(file);
+    return file;
   }
 
   async sendFile(
@@ -72,10 +72,10 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException('Cannot find file');
     }
-    const exists = await fs
-      .access(`${path.join(storageDir(), file.type)}/${file.fileName}`)
-      .then(() => true)
-      .catch(() => false);
+    const exists = await this.checkIfFileExistInFolder(
+      file.type,
+      file.fileName,
+    );
 
     if (exists) {
       res.sendFile(file.fileName, {
@@ -86,26 +86,20 @@ export class FilesService {
     }
   }
 
-  async findUnique(
-    property: UniqueFileProp,
-    value: string | ObjectId,
-  ): Promise<FindFileResponse> {
+  async findUnique(property: UniqueFileProp, value: string | ObjectId) {
     const file = await this.fileModel.findOne({ [property]: value });
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
 
-    return this.filter(file);
+    return file;
   }
 
   async search({
     filters,
     page = 1,
     sort = SortType.desc,
-    type,
-    subject,
     title,
-    authorName,
     sortBy: sortByProperty,
     perPage = 9,
   }: {
@@ -118,7 +112,7 @@ export class FilesService {
     title?: string;
     subject?: string;
     authorName?: string;
-  }): Promise<FindFilesResponse> {
+  }) {
     const skip = (page - 1) * perPage;
     const isSearching = !!title;
     const sortBy = this.generateSortByObject({
@@ -167,7 +161,7 @@ export class FilesService {
         ])
         .toArray();
       return {
-        files: files.map((file) => this.filter(file)),
+        files: files,
         requiredPages: Math.ceil(count / perPage),
         count,
         page,
@@ -213,7 +207,7 @@ export class FilesService {
     id: ObjectId,
     updateFileDto: UpdateFileDto,
     user: UserInterface,
-  ): Promise<UpdateFileResponse> {
+  ) {
     const file = await this.fileModel.findById(id);
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
@@ -234,10 +228,10 @@ export class FilesService {
       slug,
     });
     const updatedFile = await this.fileModel.findById(id);
-    return this.filter(updatedFile);
+    return updatedFile;
   }
 
-  async remove(id: ObjectId, user: UserInterface): Promise<DeleteFileResponse> {
+  async remove(id: ObjectId, user: UserInterface) {
     const file = await this.fileModel.findById(id);
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
@@ -247,7 +241,43 @@ export class FilesService {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś pliku');
     }
     await fs.unlink(`${path.join(storageDir(), file.type)}/${file.fileName}`);
-    return this.filter(await this.fileModel.findByIdAndDelete(id));
+    return await this.fileModel.findByIdAndDelete(id);
+  }
+
+  filterFile(file: any): FileInterface {
+    const {
+      title,
+      authorId,
+      authorName,
+      subject,
+      type,
+      createdAt,
+      updatedAt,
+      _id,
+      fileSize,
+      slug,
+      extension,
+    } = file;
+    return {
+      _id,
+      extension,
+      title,
+      slug,
+      authorId,
+      authorName,
+      subject,
+      type,
+      createdAt,
+      updatedAt,
+      fileSize,
+    };
+  }
+
+  private async checkIfFileExistInFolder(type: FileType, name: string) {
+    return fs
+      .access(`${path.join(storageDir(), type)}/${name}`)
+      .then(() => true)
+      .catch(() => false);
   }
 
   private async hasPermission(user: UserInterface, authorId: string) {
@@ -277,35 +307,6 @@ export class FilesService {
         : `${formattedTitle}-${sameTitleFilesCount + 1}`;
 
     return slug;
-  }
-
-  private filter(file: any): FileInterface {
-    const {
-      title,
-      authorId,
-      authorName,
-      subject,
-      type,
-      createdAt,
-      updatedAt,
-      _id,
-      fileSize,
-      slug,
-      extension,
-    } = file;
-    return {
-      _id,
-      extension,
-      title,
-      slug,
-      authorId,
-      authorName,
-      subject,
-      type,
-      createdAt,
-      updatedAt,
-      fileSize,
-    };
   }
 
   private generateFilters(filterProperties: { key: string; value: string }[]) {

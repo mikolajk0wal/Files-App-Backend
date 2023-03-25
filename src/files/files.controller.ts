@@ -40,6 +40,7 @@ import { FileTypeGuard } from 'src/guards/file-type.guard';
 import { ObjectId } from 'src/types/object-id';
 import { ParsePagePipe } from 'src/pipes/parse-page.pipe';
 import { FilesSortByProperty } from '../enums/sort-by';
+import { FileInterface } from 'src/interfaces/File';
 
 @Controller('api/files')
 export class FilesController {
@@ -57,7 +58,9 @@ export class FilesController {
     @UploadedFile() file: Express.Multer.File,
     @UserObj() user: UserInterface,
   ): Promise<CreateFileResponse> {
-    return this.filesService.create(createFileDto, file, user);
+    return this.filesService
+      .create(createFileDto, file, user)
+      .then(this.filesService.filterFile);
   }
 
   @Get('file/:id')
@@ -77,12 +80,16 @@ export class FilesController {
   findById(
     @Param('id', new IdParamPipe()) id: ObjectId,
   ): Promise<FindFileResponse> {
-    return this.filesService.findUnique('_id', id);
+    return this.filesService
+      .findUnique('_id', id)
+      .then(this.filesService.filterFile);
   }
 
   @Get('slug/:slug')
   findBySlug(@Param('slug') slug: string): Promise<FindFileResponse> {
-    return this.filesService.findUnique('slug', slug);
+    return this.filesService
+      .findUnique('slug', slug)
+      .then(this.filesService.filterFile);
   }
 
   @Get('')
@@ -98,17 +105,22 @@ export class FilesController {
     @Query('subject') subject?: string,
     @Query('authorName') authorName?: string,
   ): Promise<FindFilesResponse> {
-    return this.filesService.search({
-      filters: req.filters,
-      page,
-      sort,
-      sortBy,
-      type,
-      perPage,
-      subject,
-      title,
-      authorName,
-    });
+    return this.filesService
+      .search({
+        filters: req.filters,
+        page,
+        sort,
+        sortBy,
+        type,
+        perPage,
+        subject,
+        title,
+        authorName,
+      })
+      .then((response) => ({
+        ...response,
+        files: response.files.map(this.filesService.filterFile),
+      }));
   }
 
   @UseGuards(FileTypeGuard)
@@ -128,7 +140,9 @@ export class FilesController {
     @Body() updateFileDto: UpdateFileDto,
     @UserObj() user: UserInterface,
   ): Promise<UpdateFileResponse> {
-    return this.filesService.update(id, updateFileDto, user);
+    return this.filesService
+      .update(id, updateFileDto, user)
+      .then(this.filesService.filterFile);
   }
 
   @Delete(':id')
@@ -137,6 +151,8 @@ export class FilesController {
     @Param('id', new IdParamPipe()) id: ObjectId,
     @UserObj() user: UserInterface,
   ): Promise<DeleteFileResponse> {
-    return this.filesService.remove(id, user);
+    return this.filesService
+      .remove(id, user)
+      .then(this.filesService.filterFile);
   }
 }
