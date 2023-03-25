@@ -126,16 +126,7 @@ export class FilesService {
     ];
 
     if (isSearching) {
-      pipeline.unshift({
-        $search: {
-          index: 'default',
-          text: {
-            query: title,
-            path: 'title',
-            fuzzy: {},
-          },
-        },
-      });
+      this.unshiftSearchStateToPipeline(pipeline, title);
     }
 
     const files = await this.fileModel.collection
@@ -153,6 +144,7 @@ export class FilesService {
       page,
     };
   }
+
   async getSearchSuggestions(
     title: string,
     { authorName, type }: { authorName?: string; type?: FileType },
@@ -263,6 +255,19 @@ export class FilesService {
       ])
       .toArray();
     return count;
+  }
+
+  private unshiftSearchStateToPipeline(pipeline: object[], title: string) {
+    pipeline.unshift({
+      $search: {
+        index: 'default',
+        text: {
+          query: title,
+          path: 'title',
+          fuzzy: {},
+        },
+      },
+    });
   }
 
   private async checkIfFileExistInFolder(type: FileType, name: string) {
