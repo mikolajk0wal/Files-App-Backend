@@ -122,21 +122,12 @@ export class FilesService {
     authorName?: string;
   }): Promise<FindFilesResponse> {
     const skip = (page - 1) * perPage;
-    const sortOrder = sort ? (sort === SortType.desc ? -1 : 1) : -1;
     const isSearching = !!title;
-    let sortBy = {};
-
-    if (isSearching) {
-      sortBy = {
-        score: -1,
-        createdAt: sortOrder,
-      };
-    } else {
-      sortBy = { [sortByProperty ? sortByProperty : 'createdAt']: sortOrder };
-    }
-    if (type) {
-      filters.type = type;
-    }
+    const sortBy = this.generateSortByObject({
+      isSearching,
+      sortType: sort,
+      sortByProperty,
+    });
 
     const pipeline: any = [
       { $match: filters },
@@ -232,7 +223,7 @@ export class FilesService {
       throw new NotFoundException('Nie znaleziono pliku');
     }
 
-    const canUpdate = await this.canUpdate(user, file.authorId.toString());
+    const canUpdate = await this.hasPermission(user, file.authorId.toString());
 
     if (!canUpdate) {
       throw new UnauthorizedException('Nie możesz edytować czyjegoś pliku');
@@ -260,7 +251,7 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException('Nie znaleziono pliku');
     }
-    const canRemove = await this.canUpdate(user, file.authorId.toString());
+    const canRemove = await this.hasPermission(user, file.authorId.toString());
     if (!canRemove) {
       throw new UnauthorizedException('Nie możesz usunąć czyjegoś pliku');
     }
@@ -268,8 +259,7 @@ export class FilesService {
     return this.filter(await this.fileModel.findByIdAndDelete(id));
   }
 
-  //Check if user can edit or remove files
-  private async canUpdate(user: UserInterface, authorId: string) {
+  private async hasPermission(user: UserInterface, authorId: string) {
     const owner = await this.userModel.findOne({ _id: authorId });
     return (
       authorId === user._id.toString() ||
@@ -321,5 +311,31 @@ export class FilesService {
       updatedAt,
       fileSize,
     };
+  }
+
+  private generateSortByObject({
+    isSearching,
+    sortType,
+    sortByProperty,
+  }: {
+    isSearching: boolean;
+    sortType: SortType;
+    sortByProperty?: string;
+  }) {
+    const sortTypeAsNumber = this.transformSortTypeToNumber(sortType);
+    if (isSearching) {
+      return {
+        score: -1,
+        createdAt: sortTypeAsNumber,
+      };
+    } else {
+      return {
+        [sortByProperty ? sortByProperty : 'createdAt']: sortTypeAsNumber,
+      };
+    }
+  }
+
+  private transformSortTypeToNumber(sortType: SortType) {
+    return sortType ? (sortType === SortType.desc ? -1 : 1) : -1;
   }
 }
