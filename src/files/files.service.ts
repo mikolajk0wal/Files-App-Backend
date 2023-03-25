@@ -185,13 +185,11 @@ export class FilesService {
     title: string,
     { authorName, type }: { authorName?: string; type?: FileType },
   ): Promise<GetSearchSuggestionsResponse> {
-    const filters: any = {};
-    if (authorName) {
-      filters.authorName = authorName;
-    }
-    if (type) {
-      filters.type = type;
-    }
+    const filters = this.generateFilters([
+      { key: 'authorName', value: authorName },
+      { key: 'type', value: type },
+    ]);
+
     const pipeline: any = [
       {
         $search: {
@@ -311,6 +309,15 @@ export class FilesService {
       updatedAt,
       fileSize,
     };
+  }
+
+  private generateFilters(filterProperties: { key: string; value: string }[]) {
+    const filters = {};
+    filterProperties.forEach((filterProperty) => {
+      if (!filterProperty || !filterProperty.value) return;
+      filters[filterProperty.key] = filterProperty.value;
+    });
+    return filters;
   }
 
   private generateSortByObject({
