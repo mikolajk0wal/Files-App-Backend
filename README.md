@@ -2,17 +2,17 @@
 
 📂 Welcome to the Files App Backend repository! This is the backend server for the Files App, providing API endpoints for user authentication, file management, comments, and user operations.
 
-## Most important endpoints API Documentation
+## Most important endpoints
 
 ### Authentication Endpoints
 
-#### Register a User
+🔐 Register a User
 
 - Endpoint: `/api/auth/register`
 - Method: `POST`
 - Description: Register a new user.
 
-#### Login User
+🔑 Login User
 
 - Endpoint: `/api/auth/login`
 - Method: `POST`
@@ -20,19 +20,19 @@
 
 ### Comments Endpoints
 
-#### Get All Comments
+💬 Get All Comments
 
 - Endpoint: `/api/comments`
 - Method: `GET`
 - Description: Retrieve all comments.
 
-#### Create a Comment
+✏️ Create a Comment
 
-- Endpoint: `/api/comments/:fileId`
+- Endpoint: `/api/comments`
 - Method: `POST`
 - Description: Create a new comment.
 
-#### Delete a Comment
+🗑️ Delete a Comment
 
 - Endpoint: `/api/comments/:id`
 - Method: `DELETE`
@@ -40,25 +40,25 @@
 
 ### Files Endpoints
 
-#### Get All Files
+📂 Get All Files
 
 - Endpoint: `/api/files`
 - Method: `GET`
 - Description: Retrieve all files.
 
-#### Upload a File
+⬆️ Upload a File
 
 - Endpoint: `/api/files`
 - Method: `POST`
 - Description: Upload a new file.
 
-#### Get File by ID
+📄 Get File by ID
 
 - Endpoint: `/api/files/:id`
 - Method: `GET`
 - Description: Retrieve a file by ID.
 
-#### Delete a File
+🗑️ Delete a File
 
 - Endpoint: `/api/files/:id`
 - Method: `DELETE`
@@ -66,37 +66,38 @@
 
 ### Users Endpoints
 
-#### Get All Users
+👥 Get All Users
 
 - Endpoint: `/api/users`
 - Method: `GET`
 - Description: Retrieve all users.
 
-#### Get User by ID
+👤 Get User by ID
 
 - Endpoint: `/api/users/:id`
 - Method: `GET`
 - Description: Retrieve a user by ID.
 
-#### Update User
+✏️ Update User
 
 - Endpoint: `/api/users/:id`
 - Method: `PUT`
 - Description: Update a user by ID.
 
-#### Delete User
+🗑️ Delete User
 
 - Endpoint: `/api/users/:id`
 - Method: `DELETE`
 - Description: Delete a user by ID.
 
+📣 Please note that these are just examples based on the information provided. You may need to further customize and update the documentation according to your specific project requirements.
+
 ## Technologies Used
 
-- Node.js
-- MongoDB
-- Nest.js
-- TypeScript
-
+⚙️ Node.js
+🍃 MongoDB
+🦅 Nest.js
+🔷 TypeScript
 
 ## Getting Started
 
